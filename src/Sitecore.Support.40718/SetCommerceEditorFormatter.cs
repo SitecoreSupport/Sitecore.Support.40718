@@ -1,10 +1,19 @@
-﻿using Sitecore.Support.Commerce.Engine.Connect.DataProvider.Pipelines.ContentEditor;
-using Sitecore.Shell.Applications.ContentEditor;
+﻿
 
 namespace Sitecore.Support.Commerce.Engine.Connect.DataProvider.Pipelines
 {
-  //using Sitecore.Commerce.Engine.Connect.DataProvider.Pipelines.ContentEditor;
+  using Sitecore.Commerce.Engine.Connect.DataProvider;
+  using Sitecore.Commerce.Engine.Connect.DataProvider.Definitions;
+  using Sitecore.Data;
+  using Sitecore.Data.Items;
   using Sitecore.Diagnostics;
+  using Sitecore.Shell.Applications.ContentEditor;
+  using Sitecore.Support.Commerce.Engine.Connect.DataProvider.Pipelines.ContentEditor;
+  using System.Linq;
+  using System.Collections.Generic;
+  using System;
+  using Sitecore.Web.UI.HtmlControls;
+  using Sitecore.Commerce.Engine.Connect.DataProvider.Pipelines.ContentEditor;
 
   /// <summary>
   /// Content editor pipeline that sets the <see cref="CommerceEditorFormatter"/> as the SC editor formatter.
@@ -17,18 +26,40 @@ namespace Sitecore.Support.Commerce.Engine.Connect.DataProvider.Pipelines
     /// <param name="args">The pipeline arguments.</param>
     public void Process(Sitecore.Shell.Applications.ContentEditor.Pipelines.RenderContentEditor.RenderContentEditorArgs args)
     {
-      // As there are mutliple types of editors in Sitecore, we need to override each one and make sure we create an appropriate
-      // override compared to the type that is already set.
       Assert.IsNotNull(args.EditorFormatter, "args.EditorFormatter");
+      Assert.IsNotNull(args.Item, "args.Item");
 
-      if (args.EditorFormatter.GetType().FullName == "Sitecore.Shell.Applications.ContentEditor.TranslatorFormatter")
-      { // ALEX: when clicking "Translate" button
-        args.EditorFormatter = new CommerceEditorFormatter { Arguments = args };
+      if (ShouldUseCommerceFormatter(args.Item))
+      {
+        if (String.Equals(args.EditorFormatter.GetType().FullName, "Sitecore.Shell.Applications.ContentEditor.TranslatorFormatter"))
+        {
+          // using the extended  inherited from TranslatorFormatter
+          args.EditorFormatter = new Sitecore.Support.Commerce.Engine.Connect.DataProvider.Pipelines.ContentEditor.CommerceEditorFormatter { Arguments = args };
+        }
+        else
+        {
+          // this is not clear if using the Reset Fields feature is supposed to work on the commerce items. Therefore, it's not implemented.
+          args.EditorFormatter = new Sitecore.Commerce.Engine.Connect.DataProvider.Pipelines.ContentEditor.CommerceEditorFormatter { Arguments = args };
+        }
       }
-      else
-      { // ALEX: when un-clicking "Translate" button
-        args.EditorFormatter = new EditorFormatter { Arguments = args };
-      }
+    }
+
+    protected virtual bool ShouldUseCommerceFormatter(Item item)
+    {
+      var catalogTemplates =
+          new List<ID>
+          {
+                    KnownItemIds.CatalogGeneratedFolder,
+                    KnownItemIds.CatalogTemplateId,
+                    KnownItemIds.CategoryTemplateId,
+                    KnownItemIds.SellableItemTemplateId,
+                    KnownItemIds.SellableItemVariantTemplateId
+          };
+
+      var repository = new CatalogRepository();
+
+      return
+          (catalogTemplates.Contains(item.TemplateID) || repository.TemplateExistsInMappings(item.TemplateID));
     }
   }
 }
