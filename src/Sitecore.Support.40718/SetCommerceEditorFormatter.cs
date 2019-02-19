@@ -14,6 +14,7 @@ namespace Sitecore.Support.Commerce.Engine.Connect.DataProvider.Pipelines
   using System;
   using Sitecore.Web.UI.HtmlControls;
   using Sitecore.Commerce.Engine.Connect.DataProvider.Pipelines.ContentEditor;
+  using Sitecore.Commerce.Engine.Connect.DataProvider.Extensions;
 
   /// <summary>
   /// Content editor pipeline that sets the <see cref="CommerceEditorFormatter"/> as the SC editor formatter.
@@ -46,20 +47,7 @@ namespace Sitecore.Support.Commerce.Engine.Connect.DataProvider.Pipelines
 
     protected virtual bool ShouldUseCommerceFormatter(Item item)
     {
-      var catalogTemplates =
-          new List<ID>
-          {
-                    KnownItemIds.CatalogGeneratedFolder,
-                    KnownItemIds.CatalogTemplateId,
-                    KnownItemIds.CategoryTemplateId,
-                    KnownItemIds.SellableItemTemplateId,
-                    KnownItemIds.SellableItemVariantTemplateId
-          };
-
-      var repository = new CatalogRepository();
-
-      return
-          (catalogTemplates.Contains(item.TemplateID) || repository.TemplateExistsInMappings(item.TemplateID));
+      return item.IsCatalogItem();
     }
   }
 }
