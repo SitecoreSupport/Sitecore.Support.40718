@@ -28,9 +28,8 @@ namespace Sitecore.Support.Commerce.Engine.Connect.DataProvider.Pipelines
     public void Process(Sitecore.Shell.Applications.ContentEditor.Pipelines.RenderContentEditor.RenderContentEditorArgs args)
     {
       Assert.IsNotNull(args.EditorFormatter, "args.EditorFormatter");
-      Assert.IsNotNull(args.Item, "args.Item");
 
-      if (ShouldUseCommerceFormatter(args.Item))
+      if ((args.Item != null) && ShouldUseCommerceFormatter(args.Item))
       {
         if (String.Equals(args.EditorFormatter.GetType().FullName, "Sitecore.Shell.Applications.ContentEditor.TranslatorFormatter"))
         {
@@ -47,6 +46,8 @@ namespace Sitecore.Support.Commerce.Engine.Connect.DataProvider.Pipelines
 
     protected virtual bool ShouldUseCommerceFormatter(Item item)
     {
+      Assert.IsNotNull(item, "item");
+
       return item.IsCatalogItem();
     }
   }
